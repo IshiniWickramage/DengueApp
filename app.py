@@ -81,7 +81,7 @@ div[data-baseweb="select"] > div {
 """, unsafe_allow_html=True)
 
 
-st.title("Ishini's Dengue Predictor - Sri Lanka Edition")
+st.title("214209T's Dengue Predictor - Sri Lanka Edition")
 st.subheader("Custom ML App for Public Health Awareness")
 
 
