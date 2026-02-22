@@ -7,9 +7,9 @@ import joblib
 import matplotlib.pyplot as plt
 
 
-st.set_page_config(page_title="Dengue Predictor", layout="wide")
+st.set_page_config(page_title="Dengue Risk Analyzer", layout="wide", page_icon="🦟")
 
-# LOAD MODELS 
+
 model = joblib.load('model.pkl')
 scaler = joblib.load('scaler.pkl')
 encoder = joblib.load('encoder.pkl')
@@ -25,74 +25,76 @@ features = numerical_features + list(district_cols)
 
 st.markdown("""
 <style>
-
-/* Main app background */
+/* White background for a clean medical look */
 .stApp {
-    background-color: #121212;
+    background-color: #FFFFFF;
 }
 
-/* All normal text */
-html, body, [class*="css"]  {
-    color: #FFFFFF;
-}
-
-/* Title styling */
-h1, h2, h3, h4 {
-    color: #00BFFF;
-}
-
-/* Sidebar */
+/* Red Sidebar for Warning/Alert feel */
 section[data-testid="stSidebar"] {
-    background-color: #1E1E1E;
+    background-color: #D32F2F !important;
 }
 
-/* Input boxes (safe way) */
-div[data-baseweb="input"] > div {
-    background-color: #2A2A2A !important;
-    color: white !important;
-    border-radius: 8px;
-}
-
-/* Input text */
-div[data-baseweb="input"] input {
+section[data-testid="stSidebar"] .css-17l243g, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] p {
     color: white !important;
 }
 
-/* Selectbox dropdown */
-div[data-baseweb="select"] > div {
-    background-color: #2A2A2A !important;
+/* Headers in Medical Red */
+h1, h2, h3 {
+    color: #D32F2F !important;
+    font-family: 'Helvetica Neue', sans-serif;
+}
+
+/* Info boxes style */
+div.stAlert {
+    border-radius: 0px;
+    border-left: 5px solid #D32F2F;
+}
+
+/* Button Styling: Solid High-Contrast Red */
+div.stButton > button {
+    background-color: #D32F2F;
     color: white !important;
+    border-radius: 4px;
+    height: 3em;
+    width: 100%;
+    font-size: 18px;
+    border: none;
 }
 
-/* Slider text */
-.stSlider label {
-    color: white !important;
+div.stButton > button:hover {
+    background-color: #B71C1C;
+    border: none;
 }
 
-/* Buttons */
-.stButton button {
-    background-color: #00BFFF;
-    color: white;
-    border-radius: 10px;
-    font-weight: bold;
+/* Label colors for white background */
+label {
+    color: #333333 !important;
+    font-weight: bold !important;
 }
 
+/* Shadow boxes for inputs */
+[data-testid="stVerticalBlock"] > div {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border: 1px solid #eeeeee;
+}
 </style>
 """, unsafe_allow_html=True)
 
 
-st.title("214209T's Dengue Predictor - Sri Lanka Edition")
-st.subheader("Custom ML App for Public Health Awareness")
+st.title(" Dengue Case Forecasting System")
+st.markdown("##### *Public Health Decision Support Tool for Sri Lanka*")
 
-
-st.sidebar.title("Dengue Prevention Tips")
-st.sidebar.markdown("""
-- Remove standing water from containers  
-- Use mosquito nets during monsoon (Oct–Dec)  
-- Report symptoms early  
-- Source: Ministry of Health, Sri Lanka  
+# SIDEBAR
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2865/2865800.png", width=100)
+st.sidebar.title("Awareness Panel")
+st.sidebar.info("""
+**Prevention Measures:**
+- Empty flower pots weekly.
+- Clean gutters and drains.
+- Wear long sleeves during dawn/dusk.
 """)
-
 
 districts = [
     'Ampara','Anuradhapura','Badulla','Batticaloa','Colombo',
@@ -102,99 +104,77 @@ districts = [
     'Polonnaruwa','Puttalam','Ratnapura','Trincomalee','Vavuniya'
 ]
 
-col1, col2 = st.columns(2)
+# INPUT SECTION
+col1, col2 = st.columns([1, 1])
 
 with col1:
-    district = st.selectbox('District', districts)
-    year = st.number_input('Year', min_value=2019, max_value=2025, value=2023)
-    month = st.slider('Month', 1, 12, value=6)
-    latitude = st.number_input(
-        "Latitude",
-        min_value=5.0,
-        max_value=10.0,
-        value=6.92
-    )
-    longitude = st.number_input(
-        "Longitude",
-        min_value=79.0,
-        max_value=82.0,
-        value=79.91
-    )
+    st.subheader("Geolocation & Time")
+    district = st.selectbox('Select District', districts)
+    year = st.number_input('Assessment Year', 2019, 2025, 2023)
+    month = st.select_slider('Assessment Month', options=list(range(1, 13)), value=6)
+    
+    # Nested columns for Lat/Lon
+    subcol1, subcol2 = st.columns(2)
+    lat = subcol1.number_input("Lat", 5.0, 10.0, 6.92)
+    lon = subcol2.number_input("Lon", 79.0, 82.0, 79.91)
 
 with col2:
-    elevation = st.number_input('Elevation (m)', min_value=0, max_value=2000, value=4)
-    temp_avg = st.number_input('Avg Temperature (°C)', min_value=20.0, max_value=35.0, value=28.0)
-    precip_avg = st.number_input('Avg Precipitation (mm)', min_value=0.0, max_value=500.0, value=100.0)
-    humidity_avg = st.number_input('Avg Humidity (%)', min_value=50.0, max_value=100.0, value=75.0)
-    lagged_cases = st.number_input('Previous Month Cases', min_value=0, max_value=10000, value=100)
+    st.subheader(" Environmental Factors")
+    elevation = st.number_input('Elevation (m)', 0, 2000, 4)
+    temp = st.slider('Avg Temp (°C)', 20.0, 35.0, 28.0)
+    precip = st.slider('Avg Precipitation (mm)', 0.0, 500.0, 100.0)
+    humid = st.slider('Avg Humidity (%)', 50.0, 100.0, 75.0)
+    lagged = st.number_input('Cases in Previous Month', 0, 10000, 100)
 
-#PREDICTION 
-if st.button('Predict Dengue Risk'):
+st.write("---")
+
+# PREDICTION
+if st.button('GENERATE RISK ASSESSMENT'):
 
     input_df = pd.DataFrame({
-        'Year': [year],
-        'Month': [month],
-        'District': [district],
-        'Latitude': [latitude],
-        'Longitude': [longitude],
-        'Elevation': [elevation],
-        'Temp_avg': [temp_avg],
-        'Precipitation_avg': [precip_avg],
-        'Humidity_avg': [humidity_avg],
-        'Lagged_Cases': [lagged_cases]
+        'Year': [year], 'Month': [month], 'District': [district],
+        'Latitude': [lat], 'Longitude': [lon], 'Elevation': [elevation],
+        'Temp_avg': [temp], 'Precipitation_avg': [precip],
+        'Humidity_avg': [humid], 'Lagged_Cases': [lagged]
     })
 
-    # Encode district
+    # Encoding & Scaling
     district_encoded = encoder.transform(input_df[['District']])
     district_df = pd.DataFrame(district_encoded, columns=district_cols)
-
-    input_encoded = pd.concat(
-        [input_df.drop('District', axis=1).reset_index(drop=True),
-         district_df.reset_index(drop=True)],
-        axis=1
-    )
-
-    # Scale
+    input_encoded = pd.concat([input_df.drop('District', axis=1).reset_index(drop=True), district_df.reset_index(drop=True)], axis=1)
     input_scaled = scaler.transform(input_encoded)
 
     # Predict
     input_dmatrix = xgb.DMatrix(input_scaled)
     prediction = model.predict(input_dmatrix)[0]
 
-    st.success(f"Predicted Dengue Cases: {prediction:.0f}")
+    # Result Display
+    res_col1, res_col2 = st.columns([1, 2])
+    with res_col1:
+        st.error(f"### Predicted Cases: {prediction:.0f}")
+        st.write("This forecast is based on historical weather patterns and current regional data.")
 
-               # SHAP 
+    with res_col2:
+        # SHAP Plot
+        input_scaled_df = pd.DataFrame(input_scaled, columns=features)
+        input_display_df = input_encoded.copy()
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(input_scaled_df)
+        shap_series = pd.Series(shap_values[0], index=features)
 
-    # DataFrames
-    input_scaled_df = pd.DataFrame(input_scaled, columns=features)
-    input_display_df = input_encoded.copy()
+        shap_series_clean = shap_series[~shap_series.index.str.startswith("District_")]
+        display_values_clean = input_display_df.iloc[0][~input_display_df.columns.str.startswith("District_")]
+        shap_series_clean["District"] = shap_series[shap_series.index.str.startswith("District_")].sum()
+        display_values_clean["District"] = district
 
-    # TreeExplainer
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(input_scaled_df)
+        shap_explanation = shap.Explanation(
+            values=shap_series_clean.values,
+            base_values=explainer.expected_value,
+            data=display_values_clean.values,
+            feature_names=shap_series_clean.index.tolist()
+        )
 
-    # Convert to Series
-    shap_series = pd.Series(shap_values[0], index=features)
-
-   
-    shap_series_clean = shap_series[~shap_series.index.str.startswith("District_")]
-    display_values_clean = input_display_df.iloc[0][~input_display_df.columns.str.startswith("District_")]
-
-   
-    shap_series_clean["District"] = shap_series[
-        shap_series.index.str.startswith("District_")
-    ].sum()
-
-    display_values_clean["District"] = district  # selected district name
-
-    
-    shap_explanation = shap.Explanation(
-        values=shap_series_clean.values,
-        base_values=explainer.expected_value,
-        data=display_values_clean.values,
-        feature_names=shap_series_clean.index.tolist()
-    )
-
-    fig, ax = plt.subplots(figsize=(8,5))
-    shap.plots.waterfall(shap_explanation, show=False)
-    st.pyplot(fig)
+        fig, ax = plt.subplots(figsize=(8,4))
+        # SHAP waterfall with medical colors
+        shap.plots.waterfall(shap_explanation, show=False)
+        st.pyplot(fig)
