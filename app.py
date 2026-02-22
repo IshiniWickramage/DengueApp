@@ -6,10 +6,10 @@ import shap
 import joblib
 import matplotlib.pyplot as plt
 
-# -------------------- PAGE CONFIG --------------------
+
 st.set_page_config(page_title="Dengue Predictor", layout="wide")
 
-# -------------------- LOAD MODELS --------------------
+# LOAD MODELS 
 model = joblib.load('model.pkl')
 scaler = joblib.load('scaler.pkl')
 encoder = joblib.load('encoder.pkl')
@@ -80,11 +80,11 @@ div[data-baseweb="select"] > div {
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------- TITLE --------------------
+
 st.title("Ishini's Dengue Predictor - Sri Lanka Edition")
 st.subheader("Custom ML App for Public Health Awareness")
 
-# -------------------- SIDEBAR --------------------
+
 st.sidebar.title("Dengue Prevention Tips")
 st.sidebar.markdown("""
 - Remove standing water from containers  
@@ -93,7 +93,7 @@ st.sidebar.markdown("""
 - Source: Ministry of Health, Sri Lanka  
 """)
 
-# -------------------- INPUT SECTION --------------------
+
 districts = [
     'Ampara','Anuradhapura','Badulla','Batticaloa','Colombo',
     'Galle','Gampaha','Hambantota','Jaffna','Kalutara','Kandy',
@@ -128,7 +128,7 @@ with col2:
     humidity_avg = st.number_input('Avg Humidity (%)', min_value=50.0, max_value=100.0, value=75.0)
     lagged_cases = st.number_input('Previous Month Cases', min_value=0, max_value=10000, value=100)
 
-# -------------------- PREDICTION --------------------
+#PREDICTION 
 if st.button('Predict Dengue Risk'):
 
     input_df = pd.DataFrame({
@@ -163,7 +163,7 @@ if st.button('Predict Dengue Risk'):
 
     st.success(f"Predicted Dengue Cases: {prediction:.0f}")
 
-               # -------------------- SHAP --------------------
+               # SHAP 
 
     # DataFrames
     input_scaled_df = pd.DataFrame(input_scaled, columns=features)
@@ -176,18 +176,18 @@ if st.button('Predict Dengue Risk'):
     # Convert to Series
     shap_series = pd.Series(shap_values[0], index=features)
 
-    # ---- REMOVE one-hot district columns ----
+   
     shap_series_clean = shap_series[~shap_series.index.str.startswith("District_")]
     display_values_clean = input_display_df.iloc[0][~input_display_df.columns.str.startswith("District_")]
 
-    # ---- Add a single District entry ----
+   
     shap_series_clean["District"] = shap_series[
         shap_series.index.str.startswith("District_")
     ].sum()
 
     display_values_clean["District"] = district  # selected district name
 
-    # Build explanation
+    
     shap_explanation = shap.Explanation(
         values=shap_series_clean.values,
         base_values=explainer.expected_value,
